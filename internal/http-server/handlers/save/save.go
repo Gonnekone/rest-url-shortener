@@ -33,7 +33,7 @@ type Response struct {
 
 func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const op = "handlers.url.save.New"
+		const op = "handlers.save.New"
 
 		log = log.With(
 			slog.String("op", op),
@@ -85,7 +85,7 @@ func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 			return
 		}
 
-		log.Info("url added")
+		log.Info("url added", slog.String("url", req.URL), slog.String("alias", alias))
 
 		responseOK(w, r, alias)
 	}
