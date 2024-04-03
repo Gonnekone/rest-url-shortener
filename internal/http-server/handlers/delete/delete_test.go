@@ -1,8 +1,11 @@
 package delete_test
 
-import "errors"
+import (
+	"errors"
+	"testing"
+)
 
-func TestDeleteHandler(t *Testing.T) {
+func TestDeleteHandler(t *testing.T) {
 	cases := []struct {
 		name      string
 		alias     string

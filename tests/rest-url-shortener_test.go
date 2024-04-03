@@ -10,7 +10,7 @@ import (
 	"github.com/gavv/httpexpect/v2"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Gonnekone/rest-url-shortener/internal/http-server/handlers/url/save"
+	"github.com/Gonnekone/rest-url-shortener/internal/http-server/handlers/save"
 	"github.com/Gonnekone/rest-url-shortener/internal/lib/api"
 	"github.com/Gonnekone/rest-url-shortener/internal/lib/random"
 )
@@ -38,7 +38,6 @@ func TestURLShortener_HappyPath(t *testing.T) {
 		ContainsKey("alias")
 }
 
-//nolint:funlen
 func TestURLShortener_SaveRedirect(t *testing.T) {
 	testCases := []struct {
 		name  string
@@ -49,7 +48,7 @@ func TestURLShortener_SaveRedirect(t *testing.T) {
 		{
 			name:  "Valid URL",
 			url:   gofakeit.URL(),
-			alias: gofakeit.Word() + gofakeit.Word(),
+			alias: random.NewRandomString(10),
 		},
 		{
 			name:  "Invalid URL",
@@ -81,7 +80,7 @@ func TestURLShortener_SaveRedirect(t *testing.T) {
 					URL:   tc.url,
 					Alias: tc.alias,
 				}).
-				WithBasicAuth("myuser", "mypass").
+				WithBasicAuth("user", "password").
 				Expect().Status(http.StatusOK).
 				JSON().Object()
 

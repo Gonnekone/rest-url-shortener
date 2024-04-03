@@ -8,8 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Gonnekone/rest-url-shortener/internal/http-server/handlers/url/save"
-	"github.com/Gonnekone/rest-url-shortener/internal/http-server/handlers/url/save/mocks"
+	"github.com/Gonnekone/rest-url-shortener/internal/http-server/handlers/save"
+	"github.com/Gonnekone/rest-url-shortener/internal/http-server/handlers/save/mocks"
 	"github.com/Gonnekone/rest-url-shortener/internal/lib/logger/handlers/slogdiscard"
 	"github.com/Gonnekone/rest-url-shortener/internal/storage"
 	"github.com/stretchr/testify/mock"

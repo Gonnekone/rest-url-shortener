@@ -1,6 +1,7 @@
 package config
 
 import (
+	"flag"
 	"log"
 	"os"
 	"time"
@@ -23,7 +24,7 @@ type HTTPServer struct {
 }
 
 func MustLoad() *Config {
-	configPath := "./config/local.yaml"// TODO: os.Getenv("CONFIG_PATH")
+	configPath := fetchConfigPath()
 	if configPath == "" {
 		log.Fatal("CONFIG_PATH is required")
 	}
@@ -38,4 +39,20 @@ func MustLoad() *Config {
 	}
 
 	return &cfg
+}
+
+// fetchConfigPath fetches config path from command line flag or environment variable.
+// Priority: flag > env > default.
+// Default value is empty string.
+func fetchConfigPath() string {
+	var res string
+
+	flag.StringVar(&res, "config", "", "path to config file")
+	flag.Parse()
+
+	if res == "" {
+		res = os.Getenv("CONFIG_PATH")
+	}
+
+	return res
 }

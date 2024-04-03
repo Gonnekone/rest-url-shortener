@@ -1,17 +1,21 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/Gonnekone/rest-url-shortener/internal/config"
 	"github.com/Gonnekone/rest-url-shortener/internal/http-server/handlers/redirect"
 	"github.com/Gonnekone/rest-url-shortener/internal/http-server/handlers/save"
+	"github.com/Gonnekone/rest-url-shortener/internal/http-server/handlers/delete"
 	mwLogger "github.com/Gonnekone/rest-url-shortener/internal/http-server/middleware/logger"
 	"github.com/Gonnekone/rest-url-shortener/internal/lib/logger/handlers/slogpretty"
 	"github.com/Gonnekone/rest-url-shortener/internal/lib/logger/sl"
-	"github.com/Gonnekone/rest-url-shortener/internal/storage"
 	"github.com/Gonnekone/rest-url-shortener/internal/storage/sqlite"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -27,7 +31,7 @@ func main() {
 	cfg := config.MustLoad()
 
 	log := setupLogger(cfg.Env)
-	log.Info("staeing up the application", slog.String("env", cfg.Env))
+	log.Info("starting up the application", slog.String("env", cfg.Env))
 	log.Debug("debug messages are enabled")
 
 	storage, err := sqlite.New(cfg.StoragePath)
@@ -51,7 +55,7 @@ func main() {
 		r.Delete("/{alias}", delete.New(log, storage))
 	})
 
-	router.Get("url/{alias}", redirect.New(log, storage))
+	router.Get("/{alias}", redirect.New(log, storage))
 
 	log.Info("starting server", slog.String("address", cfg.HTTPServer.Address))
 
@@ -86,7 +90,7 @@ func main() {
 		return
 	}
 
-	closeDB(storage)
+	//closeDB(storage)
 	log.Info("server stopped")
 }
 
@@ -119,10 +123,10 @@ func setupPrettySlog() *slog.Logger {
 	return slog.New(handler)
 }
 
-func closeDB(db io.Closer) {
-	if err := db.Close(); err != nil {
-		_ = log.Println(errors.Wrap(err, "err closing db connection"))
-	} else {
-		_ = log.Println("db connection gracefully closed")
-	}
-}
+// func closeDB(db io.Closer) {
+// 	if err := db.Close(); err != nil {
+// 		_ = log.Println(errors.Wrap(err, "err closing db connection"))
+// 	} else {
+// 		_ = log.Println("db connection gracefully closed")
+// 	}
+// }
