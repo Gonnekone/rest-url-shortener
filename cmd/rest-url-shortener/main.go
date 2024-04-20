@@ -90,7 +90,9 @@ func main() {
 		return
 	}
 
-	//closeDB(storage)
+	log.Debug("closing storage")
+
+	storage.Close()
 	log.Info("server stopped")
 }
 
@@ -122,11 +124,3 @@ func setupPrettySlog() *slog.Logger {
 
 	return slog.New(handler)
 }
-
-// func closeDB(db io.Closer) {
-// 	if err := db.Close(); err != nil {
-// 		_ = log.Println(errors.Wrap(err, "err closing db connection"))
-// 	} else {
-// 		_ = log.Println("db connection gracefully closed")
-// 	}
-// }
