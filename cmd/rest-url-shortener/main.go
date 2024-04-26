@@ -10,9 +10,10 @@ import (
 	"time"
 
 	"github.com/Gonnekone/rest-url-shortener/internal/config"
-	"github.com/Gonnekone/rest-url-shortener/internal/http-server/handlers/redirect"
-	"github.com/Gonnekone/rest-url-shortener/internal/http-server/handlers/save"
 	"github.com/Gonnekone/rest-url-shortener/internal/http-server/handlers/delete"
+	"github.com/Gonnekone/rest-url-shortener/internal/http-server/handlers/redirect"
+	"github.com/Gonnekone/rest-url-shortener/internal/http-server/handlers/redirectRandom"
+	"github.com/Gonnekone/rest-url-shortener/internal/http-server/handlers/save"
 	mwLogger "github.com/Gonnekone/rest-url-shortener/internal/http-server/middleware/logger"
 	"github.com/Gonnekone/rest-url-shortener/internal/lib/logger/handlers/slogpretty"
 	"github.com/Gonnekone/rest-url-shortener/internal/lib/logger/sl"
@@ -55,14 +56,15 @@ func main() {
 		r.Delete("/{alias}", delete.New(log, storage))
 	})
 
-	router.Get("/{alias}", redirect.New(log, storage))
+	router.Get("/redirect/{alias}", redirect.New(log, storage))
+	router.Get("/random", redirectrandom.New(log, storage))
 
 	log.Info("starting server", slog.String("address", cfg.HTTPServer.Address))
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	srv := &http.Server {
+	srv := &http.Server{
 		Addr:         cfg.HTTPServer.Address,
 		Handler:      router,
 		ReadTimeout:  cfg.HTTPServer.Timeout,
@@ -105,7 +107,7 @@ func setupLogger(env string) *slog.Logger {
 
 	case envDev:
 		log = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	
+
 	case envProd:
 		log = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	}

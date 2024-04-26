@@ -6,11 +6,13 @@ import (
 	"fmt"
 
 	"github.com/Gonnekone/rest-url-shortener/internal/storage"
+	"github.com/Gonnekone/rest-url-shortener/internal/storage/redis"
 	"github.com/mattn/go-sqlite3"
 )
 
 type Storage struct {
 	db *sql.DB
+	cache *redis.RedisStorage
 }
 
 func (s *Storage) Close() error {
@@ -41,7 +43,14 @@ func New(storagePath string) (*Storage, error) {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return &Storage{db: db}, nil
+	rdb, err := redis.New()
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	fmt.Println("redis is ready")
+
+	return &Storage{db: db, cache: rdb}, nil
 }
 
 func (s *Storage) SaveURL(urlToSave string, alias string) error {
@@ -67,12 +76,19 @@ func (s *Storage) SaveURL(urlToSave string, alias string) error {
 func (s *Storage) GetURL(alias string) (string, error) {
 	const op = "storage.sqlite.GetURL"
 
+	resURL, redisErr := s.cache.GetURL(alias)
+	if redisErr == nil {
+		return resURL, nil
+	}
+
+	if redisErr != storage.ErrURLNotFound {
+		return "", fmt.Errorf("%s: %w", op, redisErr)
+	}
+
 	stmt, err := s.db.Prepare("SELECT url FROM url WHERE alias = ?")
 	if err != nil {
 		return "", fmt.Errorf("%s: prepare statement: %w", op, err)
 	}
-
-	var resURL string
 
 	err = stmt.QueryRow(alias).Scan(&resURL)
 	if err != nil {
@@ -83,7 +99,27 @@ func (s *Storage) GetURL(alias string) (string, error) {
 		return "", fmt.Errorf("%s: execute statement: %w", op, err)
 	}
 
+	if errors.Is(redisErr, storage.ErrURLNotFound) {
+		s.cache.SaveURL(resURL, alias)
+	}
+
 	return resURL, nil
+}
+
+func (s *Storage) GetRandomAlias() (string, error) {
+    const op = "storage.sqlite.GetRandomAlias"
+
+    query := "SELECT alias FROM url ORDER BY RANDOM() LIMIT 1"
+
+    var alias string
+    err := s.db.QueryRow(query).Scan(&alias)
+    if err != nil {
+        return "", fmt.Errorf("%s: %w", op, err)
+    }
+
+	fmt.Println("got random alias")
+
+    return alias, nil
 }
 
 func (s* Storage) DeleteURL(alias string) error {
